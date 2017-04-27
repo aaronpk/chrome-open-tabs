@@ -1,0 +1,21 @@
+{
+  "name": "Tab Statistics",
+  "version": "0.1",
+  "manifest_version": 2,
+  "description": "Count how many open tabs you have",
+
+  "icons": {
+  },
+
+  "permissions": [
+    "alarms",
+    "tabs"
+  ],
+
+  "background": {
+    "persistent": false,
+    "scripts": [
+      "opentabs.js"
+    ]
+  }
+}
