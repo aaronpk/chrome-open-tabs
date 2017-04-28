@@ -2,38 +2,45 @@
 
 'use strict';
 
-function storeTabCount() {
-  chrome.windows.getAll({populate: true}, function (windows) {
-    var total = 0;
-    var breakdown = {};
-    var windowKey;
+// consolidate async setup
+const getStorageAndWindows = (callback) =>
+  chrome.storage.sync.get({ chromeOpenTabs: {} }, ({ chromeOpenTabs: config }) =>
+    chrome.windows.getAll({populate: true}, (windows) =>
+      callback(config, windows)
+    )
+  );
 
-    for (windowKey in windows) {
-      if (!windows.hasOwnProperty(windowKey)) {
-        return;
+function storeTabCount() {
+  getStorageAndWindows(function (config, windows) {
+      var total = 0;
+      var breakdown = {};
+      var windowKey;
+
+      for (windowKey in windows) {
+        if (!windows.hasOwnProperty(windowKey)) {
+          return;
+        }
+
+        breakdown[windowKey] = windows[windowKey].tabs.length;
+
+        total += windows[windowKey].tabs.length;
       }
 
-      breakdown[windowKey] = windows[windowKey].tabs.length;
+      var d = new Date();
 
-      total += windows[windowKey].tabs.length;
-    }
+      var request = new XMLHttpRequest();
 
-    var d = new Date();
-
-    var request = new XMLHttpRequest();
-    // Someone should really make this configurable
-    request.open('POST', 'https://example.com/tabs-input.php', true);
-    request.setRequestHeader('Content-Type', 'application/json');
-    request.setRequestHeader('Authorization', 'Bearer YOURTOKENHERE');
-    request.send(JSON.stringify({
-      timestamp: d.toISOString(),
-      tzoffset: (d.getTimezoneOffset()/60)*(-3600),
-      num_windows: windows.length,
-      num_tabs: total,
-      breakdown: breakdown
-    }));
-
-  });
+      request.open('POST', config.endpoint, true);
+      request.setRequestHeader('Content-Type', 'application/json');
+      request.setRequestHeader('Authorization', `Bearer ${config.token}`);
+      request.send(JSON.stringify({
+        timestamp: d.toISOString(),
+        tzoffset: (d.getTimezoneOffset()/60)*(-3600),
+        num_windows: windows.length,
+        num_tabs: total,
+        breakdown: breakdown
+      }));
+    });
 }
 
 chrome.alarms.create('store-tab-count', {periodInMinutes: 5});
