@@ -2,18 +2,29 @@
 
 'use strict';
 
+function parseURL(url) {
+  var href = document.createElement('a');
+  href.href = url;
+  return href;
+}
+
 // consolidate async setup
 const getStorageAndWindows = (callback) =>
-  chrome.storage.sync.get({ chromeOpenTabs: {} }, ({ chromeOpenTabs: config }) =>
-    chrome.windows.getAll({populate: true}, (windows) =>
+  chrome.storage.sync.get({ token: null, endpoint: null, send_what: 'counts' }, function(config) {
+    chrome.windows.getAll({populate: true}, function(windows) {
       callback(config, windows)
-    )
-  );
+    });
+  });
 
 function storeTabCount() {
-  getStorageAndWindows(function (config, windows) {
+  getStorageAndWindows(function(config, windows) {
+    if(!config.endpoint) {
+      return;
+    }
+
       var total = 0;
       var breakdown = {};
+      var details = {};
       var windowKey;
 
       for (windowKey in windows) {
@@ -22,6 +33,26 @@ function storeTabCount() {
         }
 
         breakdown[windowKey] = windows[windowKey].tabs.length;
+
+        if(config.send_what != 'counts') {
+          details[windowKey] = [];
+
+          for (var tabKey in windows[windowKey].tabs) {
+            var tab = windows[windowKey].tabs[tabKey];
+            var url = parseURL(tab.url);
+            var info = {
+              icon: tab.favIconUrl
+            };
+            if(config.send_what == 'domains') {
+              info.domain = url.hostname;
+            } else if(config.send_what == 'urls') {
+              info.domain = url.hostname;
+              info.url = tab.url;
+            }
+
+            details[windowKey].push(info);
+          }
+        }
 
         total += windows[windowKey].tabs.length;
       }
@@ -38,7 +69,8 @@ function storeTabCount() {
         tzoffset: (d.getTimezoneOffset()/60)*(-3600),
         num_windows: windows.length,
         num_tabs: total,
-        breakdown: breakdown
+        breakdown: breakdown,
+        details: details
       }));
     });
 }

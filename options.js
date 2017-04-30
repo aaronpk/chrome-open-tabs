@@ -1,42 +1,31 @@
-function saveState(newState) {
-  chrome.storage.sync.set({
-    chromeOpenTabs: newState
+
+function restoreOptions() {
+
+  chrome.storage.sync.get({ token: null, endpoint: null, send_what: 'counts' }, function(config){
+    document.getElementById('endpoint').value = config.endpoint;
+    document.getElementById('token').value = config.token;
+    document.getElementById('send_what').value = config.send_what;
   });
+
 }
 
-function setInputs({ chromeOpenTabs }) {
-  const form = document.querySelector('form');
-  const formElements = Array.from(form.elements);
+function saveOptions(e) {
 
-  formElements.forEach(element => {
-    if (chromeOpenTabs.hasOwnProperty(element.name)) {
-      element.value = chromeOpenTabs[element.name];
-    }
+  var config = {
+    endpoint: document.getElementById('endpoint').value,
+    token: document.getElementById('token').value,
+    send_what: document.getElementById('send_what').value
+  };
 
-    // form elements disabled in markup, then activated after we load from storage.
-    element.disabled = false;
+  chrome.storage.sync.set(config, function(){
+    var status = document.getElementById('status');
+    status.textContent = 'Options saved.';
+    setTimeout(function() {
+      status.innerHTML = '&nbsp;';
+    }, 750);
   });
+
 }
 
-function reduceForm(formData, element) {
-  return element.type === 'submit'
-    ? formData
-    : Object.assign({}, formData, { [element.name]: element.value });
-}
-
-function handleSubmit(e) {
-  e.preventDefault();
-
-  const elements = Array.from(e.target.elements);
-  const formData = elements.reduce(reduceForm, {});
-
-  saveState(formData);
-}
-
-const form = document.querySelector('form');
-form.onsubmit = handleSubmit;
-
-chrome.storage.sync.get({ chromeOpenTabs: {} }, setInputs);
-chrome.storage.onChanged.addListener(({ chromeOpenTabs: { newValue } }) => {
-  setInputs({ chromeOpenTabs: newValue });
-});
+document.addEventListener('DOMContentLoaded', restoreOptions);
+document.getElementById('save').addEventListener('click', saveOptions);

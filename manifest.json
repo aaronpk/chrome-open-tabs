@@ -1,8 +1,8 @@
 {
   "name": "Tab Statistics",
-  "version": "0.1",
+  "version": "0.2",
   "manifest_version": 2,
-  "description": "Count how many open tabs you have",
+  "description": "Log your open tabs to a server",
 
   "icons": {
   },
@@ -20,7 +20,6 @@
     ]
   },
 
-  "options_page": "options.html",
   "options_ui": {
     "page": "options.html",
     "chrome_style": true
