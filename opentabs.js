@@ -41,12 +41,10 @@ function storeTabCount() {
             var tab = windows[windowKey].tabs[tabKey];
             var url = parseURL(tab.url);
             var info = {
-              icon: tab.favIconUrl
+              icon: tab.favIconUrl,
+              domain: url.protocol+"//"+url.hostname
             };
-            if(config.send_what == 'domains') {
-              info.domain = url.hostname;
-            } else if(config.send_what == 'urls') {
-              info.domain = url.hostname;
+            if(config.send_what == 'urls') {
               info.url = tab.url;
             }
 
